@@ -1,0 +1,65 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// generator and datasource ...
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String   @id @default(uuid())
+  email      String   @unique
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  documents  PdfDocument[]
+}
+
+model PdfDocument {
+  id         String   @id @default(uuid())
+  pdf_name   String
+  file_hash  String?  // Optional: SHA-256 hash to detect duplicate uploads
+  user_email String
+  user       User?    @relation(fields: [user_email], references: [email], onDelete: Cascade)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  full_summary     FullSummary?
+  section_summaries SectionSummary[]
+
+  // Ensures a user cannot have two PDFs with the exact same name
+  @@unique([user_email, pdf_name])
+}
+
+model FullSummary {
+  id         String   @id @default(uuid())
+  pdf_id     String   @unique
+  pdf_name   String
+  email      String
+  summary    String   @db.Text
+  created_at DateTime @default(now())
+
+  pdf        PdfDocument @relation(fields: [pdf_id], references: [id], onDelete: Cascade)
+}
+
+model SectionSummary {
+  id            String   @id @default(uuid())
+  pdf_id        String
+  pdf_name      String
+  email         String
+  section_title String?
+  section_index Int      @default(0)
+  summary       String   @db.Text
+  created_at    DateTime @default(now())
+
+  pdf           PdfDocument @relation(fields: [pdf_id], references: [id], onDelete: Cascade)
+}
