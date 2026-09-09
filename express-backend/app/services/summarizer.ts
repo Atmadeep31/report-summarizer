@@ -4,6 +4,7 @@ import { getPdfFromS3 } from './receivepdf.js';
 import { getPdfSections } from './pdfSection.js';
 import { generateAllSectionSummaries } from './sectionSumamry/allSectionSummary.js';
 import { generateFullSummary } from './generateSummary.js';
+import { enquePdfSummarization } from '../queues/summaryQueue.js';
 
 export interface ProcessPdfResult {
     success: boolean;
@@ -78,21 +79,22 @@ export async function processPdfAndSummarize(
         // 5. Chunk Markdown and store chunks in Redis
         const cacheKey = await getPdfSections(conversionResult.markdown, conversionResult.filename);
 
-        // 6. Generate section summaries, store in Redis and Postgres DB
-        await generateAllSectionSummaries(cacheKey, pdfDoc.id, conversionResult.filename, normalizedEmail);
+        await enquePdfSummarization
+            (cacheKey,
+                pdfDoc.id,
+                conversionResult.filename,
+                normalizedEmail
+            );
 
-        // 7. Generate full study guide summary, update Postgres DB
-        const studySummary = await generateFullSummary(cacheKey, pdfDoc.id, conversionResult.filename, normalizedEmail);
 
         return {
             success: true,
             filename: conversionResult.filename,
-            finalSummary: studySummary.finalSummary,
-            message: studySummary.message,
+            message: "PDF processing enqueued successfully in BullMQ queue",
             fromCache: false
         };
     } catch (error: any) {
         console.error('[summarizer] Error in processPdfAndSummarize:', error);
         throw error;
     }
-}
+}

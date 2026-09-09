@@ -4,6 +4,11 @@ import { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import pdfRoutes from './app/routes/pdfRoutes.js';
 
+// import workers
+import './app/worker/sectionSummaryWorker.js';
+import './app/worker/finalSummaryWorker.js';
+
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -17,7 +22,7 @@ app.use(express.json());
 app.get('/', (req: Request, res: Response) => {
   res.json({
     status: 'online',
-    service: 'Study Buddy Express Backend'
+    service: 'report summary Express Backend'
   });
 });
 
