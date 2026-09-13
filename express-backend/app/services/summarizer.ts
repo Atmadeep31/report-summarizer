@@ -8,6 +8,7 @@ import { enquePdfSummarization } from '../queues/summaryQueue.js';
 
 export interface ProcessPdfResult {
     success: boolean;
+    pdfId: string;
     filename: string;
     finalSummary?: any;
     message?: string;
@@ -20,14 +21,14 @@ export interface ProcessPdfResult {
  */
 export async function processPdfAndSummarize(
     s3Key: string,
-    userEmail: string = "[EMAIL_ADDRESS]"
+    userEmail: string = "test@example.com"
 ): Promise<ProcessPdfResult> {
     try {
         if (!s3Key) {
             throw new Error("s3Key is required.");
         }
 
-        const normalizedEmail = userEmail.trim() || "[EMAIL_ADDRESS]";
+        const normalizedEmail = userEmail.trim() || "test@example.com";
         const pdfName = s3Key;
 
         // 1. Ensure User exists in DB
@@ -62,6 +63,7 @@ export async function processPdfAndSummarize(
                 const parsedSummary = JSON.parse(existingFullSummary.summary);
                 return {
                     success: true,
+                    pdfId: pdfDoc.id,
                     filename: pdfName,
                     finalSummary: parsedSummary,
                     message: "Retrieved full summary from database cache",
@@ -79,16 +81,16 @@ export async function processPdfAndSummarize(
         // 5. Chunk Markdown and store chunks in Redis
         const cacheKey = await getPdfSections(conversionResult.markdown, conversionResult.filename);
 
-        await enquePdfSummarization
-            (cacheKey,
-                pdfDoc.id,
-                conversionResult.filename,
-                normalizedEmail
-            );
-
+        await enquePdfSummarization(
+            cacheKey,
+            pdfDoc.id,
+            conversionResult.filename,
+            normalizedEmail
+        );
 
         return {
             success: true,
+            pdfId: pdfDoc.id,
             filename: conversionResult.filename,
             message: "PDF processing enqueued successfully in BullMQ queue",
             fromCache: false

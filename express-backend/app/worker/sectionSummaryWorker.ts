@@ -43,7 +43,7 @@ export const sectionWorker = new Worker<sectionSumamryData>(
     },
     {
         connection: redisConnection,
-        concurrency: 3,
+        concurrency: 5,
     }
 )
 
