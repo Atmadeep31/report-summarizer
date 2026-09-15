@@ -44,10 +44,10 @@ export async function enquePdfSummarization(
                 sectionText: chunk.section
             },
             opts: {
-                attempts: 3,
+                attempts: 5,
                 backoff: {
                     type: 'exponential',
-                    delay: 2000
+                    delay: 15000
                 }
             }
         }))

@@ -1,5 +1,35 @@
 import { Request, Response } from 'express';
 import { processPdfAndSummarize } from '../services/summarizer.js';
+import { generatePresignedUrl } from '../services/preSignedUrl.js';
+
+/**
+ * Controller to handle generation of S3 pre-signed upload URLs
+ */
+export async function handlePresignedUploadUrl(req: Request, res: Response) {
+  try {
+    const filename = req.body?.filename;
+    const contentType = req.body?.contentType || 'application/pdf';
+    if (!filename || typeof filename !== 'string') {
+      res.status(400).json({
+        success: false,
+        error: 'Invalid or missing filename parameter in request body'
+      });
+      return;
+    }
+    const result = await generatePresignedUrl(filename, contentType);
+    res.json({
+      success: true,
+      uploadUrl: result.upLoadUrl,
+      s3key: result.s3key
+    })
+  } catch (error: any) {
+    console.error('Error in handlePresignedUploadUrl:', error);
+    res.status(500).json({
+      success: false,
+      error: error?.message || 'Failed to generate pre-signed upload URL.'
+    });
+  }
+}
 
 /**
  * Controller to handle PDF conversion HTTP requests using AWS S3 keys

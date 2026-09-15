@@ -23,4 +23,4 @@ ${markdownSection}`
         console.error('[sectionSummaryLLM] Error generating section summary:', error);
         throw error;
     }
-}
+}
